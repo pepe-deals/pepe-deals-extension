@@ -745,7 +745,7 @@
 
         if (resultado.TryGetProperty("preferenciasUsuario", out JsonElement valor))
         {
-            prefs = valor.Deserialize<PreferenciasUsuario>() ?? new PreferenciasUsuario();
+            prefs = valor.Deserialize<PreferenciasUsuario>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new PreferenciasUsuario();
         }
         else
         {

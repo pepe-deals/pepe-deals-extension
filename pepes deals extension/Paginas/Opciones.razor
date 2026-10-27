@@ -158,9 +158,10 @@
     protected override async Task OnInitializedAsync()
     {
         var resultado = await Extensiones.Storage.Local.Get("preferenciasUsuario");
+
         if (resultado.TryGetProperty("preferenciasUsuario", out var valor))
         {
-            prefs = valor.Deserialize<PreferenciasUsuario>() ?? new PreferenciasUsuario();
+            prefs = valor.Deserialize<PreferenciasUsuario>(new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new PreferenciasUsuario();
         }
     }
 
