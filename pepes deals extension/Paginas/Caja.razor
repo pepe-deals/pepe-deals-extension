@@ -23,6 +23,7 @@
         --colorEnlace: #95c0fe;
         --colorEnlaceHover: #3486fd;
         --descuento: #006400;
+        --fondoPanel: rgba(13, 22, 33, 0.5);
     }
 
     .pepeizq-caja-principal {
@@ -76,22 +77,64 @@
         border-radius: 5px;
     }
 
-    .pepeizq-enlace {
+    .pepedeals-enlace {
         background-color: var(--fondoBotonPequeño);
         border: 2px solid var(--fondoBotonPequeño);
         padding: 10px 20px;
         color: var(--colorTexto);
         box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.28),0px 0px 2px 0px rgba(0, 0, 0, 0.24);
         transition: transform .2s;
+        font-size: 16px;
+        cursor: pointer;
     }
 
-        .pepeizq-enlace:hover {
+        .pepedeals-enlace:hover {
             color: var(--colorTextoHover);
             transform: scale(1.01);
             background-color: var(--fondoBotonPequeñoHover);
             border: 2px solid var(--colorTextoHover);
         }
 
+    .pepedeals-cajas-precios {
+        display: grid;
+        gap: 10px;
+        align-items: start;
+    }
+
+    .pepedeals-cajas-1 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pepedeals-cajas-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .pepedeals-cajas-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @@media (max-width: 900px) {
+        .pepedeals-cajas-2,
+        .pepedeals-cajas-3 {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .pepedeals-aviso-panel {
+        overflow-x: auto;
+        z-index: 10001;
+        padding: 10px;
+        background-color: var(--fondoPanel);
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: center;
+        align-items: center;
+    }
 </style>
 
 @if (idPepeizq > 0 && (datos?.HistoricosOficiales?.Count > 0 || datos?.HistoricosNoOficiales?.Count > 0 || datos?.HistoricosMarketplaces?.Count > 0))
@@ -108,7 +151,7 @@
                 </div>
             </a>
 
-            @if (idDRM != 0 || idDRM != 8 || idDRM != 6)
+            @if (idDRM != 0 && idDRM != 8 && idDRM != 6)
             {
                 <div style="display: flex; align-items: center; gap: 10px; margin-right: 10px;">
                     @if (idDRM != 0)
@@ -205,485 +248,498 @@
             </div>
         }
 
-        @if (datos?.HistoricosOficiales?.Count > 0)
-        {
-            <div class="pepeizq-caja-info">
-                <div style="background-color: rgba(0,0,0,.5); padding: 10px 15px; border-top-left-radius: inherit; border-top-right-radius: inherit;">
-                    @WebExtensions.I18n.GetMessage("String28")
-                </div>
+        @{
+            int cajasContador = 0;
+
+            if (datos?.HistoricosOficiales?.Count > 0)
+            {
+                cajasContador += 1;
+            }
+
+            if (datos?.HistoricosNoOficiales?.Count > 0)
+            {
+                cajasContador += 1;
+            }
+
+            if (datos?.HistoricosMarketplaces?.Count > 0)
+            {
+                cajasContador += 1;
+            }
+
+            <div class="pepedeals-cajas-precios pepedeals-cajas-@cajasContador">
+                @if (datos?.HistoricosOficiales?.Count > 0)
+                {
+                    <div class="pepeizq-caja-info">
+                        <div style="background-color: rgba(0,0,0,.5); padding: 10px 15px; border-top-left-radius: inherit; border-top-right-radius: inherit; @(cajasContador > 1 ? "text-align: center" : "");">
+                            @WebExtensions.I18n.GetMessage("String28")
+                        </div>
                 
-                <div style="padding: 10px 15px; display: flex; flex-direction: column; gap: 20px;">
-                    @if (minimoHistoricoOficial != null)
-                    {
-                        string mensajeMinimo = string.Empty;
-
-                        if (mejorActualOficial != null)
-                        {
-                            if (mejorActualOficial.Datos.Precio == minimoHistoricoOficial.Datos.Precio && mejorActualOficial.Datos.Tienda == minimoHistoricoOficial.Datos.Tienda)
+                        <div style="padding: 10px 15px; display: flex; flex-direction: column; gap: 20px;">
+                            @if (minimoHistoricoOficial != null)
                             {
-                                mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String5"), minimoHistoricoOficial.Tienda);
-                            }
-                        }
+                                string mensajeMinimo = string.Empty;
 
-                        if (string.IsNullOrEmpty(mensajeMinimo) == true)
-                        {
-                            mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String4"), Herramientas.Calculadora.DiferenciaHaceTiempo(minimoHistoricoOficial.Datos.FechaDetectado, WebExtensions.I18n), minimoHistoricoOficial.Tienda);
-                        }
-
-                        if (string.IsNullOrEmpty(mensajeMinimo) == false)
-                        {
-                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                <div>
-                                    @WebExtensions.I18n.GetMessage("String3")
-                                </div>
-
-                                <div style="background: rgba(0,0,0,.7); padding: 5px 10px">
-                                    @if (prefs.Divisa == "eu")
-                                    {
-                                        if (minimoHistoricoOficial.Datos.PrecioCambiado > 0)
-                                        {
-                                            @Herramientas.Precios.Euro(minimoHistoricoOficial.Datos.PrecioCambiado)
-                                        }
-                                        else
-                                        {
-                                            @Herramientas.Precios.Euro(minimoHistoricoOficial.Datos.Precio)
-                                        }
-                                    }
-                                    else if (prefs.Divisa == "us")
-                                    {
-                                        if (minimoHistoricoOficial.Datos.PrecioCambiado > 0)
-                                        {
-                                            @Herramientas.Precios.Dolar(minimoHistoricoOficial.Datos.PrecioCambiado)
-                                        }
-                                        else
-                                        {
-                                            @Herramientas.Precios.Dolar(minimoHistoricoOficial.Datos.Precio)
-                                        }
-                                    }
-                                </div>
-
-                                <div style="font-size: 14px;">
-                                    @mensajeMinimo
-                                </div>
-                            </div>
-                        }
-                    }
-
-                    @if (mejorActualOficial == null)
-                    {
-                        <div>
-                            @WebExtensions.I18n.GetMessage("String2")
-                        </div>
-                    }
-                    else
-                    {
-                        bool enseñarEnlace = true;
-
-                        if (idDRM == 0 && mejorActualOficial.Tienda == "steam")
-                        {
-                            enseñarEnlace = false;
-                        }
-
-                        if (idDRM == 8 && mejorActualOficial.Tienda == "gog")
-                        {
-                            enseñarEnlace = false;
-                        }
-
-                        if (idDRM == 6 && mejorActualOficial.Tienda == "epicgamesstore")
-                        {
-                            enseñarEnlace = false;
-                        }
-
-                        if (enseñarEnlace == true)
-                        {
-                            <div style="display: flex; flex-direction: column; gap: 5px;">
-                                <div>
-                                    @WebExtensions.I18n.GetMessage("String6")
-                                </div>
-
-                                <div class="pepeizq-enlace">
-                                    <a href="@mejorActualOficial.Datos.Enlace" style="color: inherit;" target="_blank">
-                                        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; justify-content: space-between;">
-                                            <div style="display: flex; align-items: center; gap: 15px;">
-                                                <img src="https://pepe.deals/@mejorActualOficial.TiendaIcono" style="max-width: 20px; max-height: 20px;" />
-
-                                                @if (idDRM == 0)
-                                                {
-                                                    <div>
-                                                        @mejorActualOficial.Tienda
-                                                    </div>
-                                                }
-                                            </div>
-
-                                            <span style="flex: 1;"></span>
-
-                                            @if (mejorActualOficial.Datos.Descuento > 0)
-                                            {
-                                                <div style="padding: 10px 15px; background-color: var(--descuento);">
-                                                    @mejorActualOficial.Datos.Descuento%
-                                                </div>
-                                            }
-
-                                            <div>
-                                                @if (prefs.Divisa == "eu")
-                                                {
-                                                    if (mejorActualOficial.Datos.PrecioCambiado > 0)
-                                                    {
-                                                        @Herramientas.Precios.Euro(mejorActualOficial.Datos.PrecioCambiado)
-                                                    }
-                                                    else
-                                                    {
-                                                        @Herramientas.Precios.Euro(mejorActualOficial.Datos.Precio)
-                                                    }
-                                                }
-                                                else if (prefs.Divisa == "us")
-                                                {
-                                                    if (mejorActualOficial.Datos.PrecioCambiado > 0)
-                                                    {
-                                                        @Herramientas.Precios.Dolar(mejorActualOficial.Datos.PrecioCambiado)
-                                                    }
-                                                    else
-                                                    {
-                                                        @Herramientas.Precios.Dolar(mejorActualOficial.Datos.Precio)
-                                                    }
-                                                }
-                                            </div>
-                                        </div>
-                                    </a>
-                                </div>
-
-                                @if (string.IsNullOrEmpty(mejorActualOficial.Datos.CodigoTexto) == false)
+                                if (mejorActualOficial != null)
                                 {
-                                    <div style="text-align: right; margin-right: 10px; font-size: 14px;">
-                                        @string.Format(WebExtensions.I18n.GetMessage("String7"), mejorActualOficial.Datos.CodigoTexto)
+                                    if (mejorActualOficial.Datos.Precio == minimoHistoricoOficial.Datos.Precio && mejorActualOficial.Datos.Tienda == minimoHistoricoOficial.Datos.Tienda)
+                                    {
+                                        mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String5"), minimoHistoricoOficial.Tienda);
+                                    }
+                                }
+
+                                if (string.IsNullOrEmpty(mensajeMinimo) == true)
+                                {
+                                    mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String4"), Herramientas.Calculadora.DiferenciaHaceTiempo(minimoHistoricoOficial.Datos.FechaDetectado, WebExtensions.I18n), minimoHistoricoOficial.Tienda);
+                                }
+
+                                if (string.IsNullOrEmpty(mensajeMinimo) == false)
+                                {
+                                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; @(cajasContador > 1 ? "justify-content: center;" : "")">
+                                        <div>
+                                            @WebExtensions.I18n.GetMessage("String3")
+                                        </div>
+
+                                        <div style="background: rgba(0,0,0,.7); padding: 5px 10px">
+                                            @if (prefs.Divisa == "eu")
+                                            {
+                                                if (minimoHistoricoOficial.Datos.PrecioCambiado > 0)
+                                                {
+                                                    @Herramientas.Precios.Euro(minimoHistoricoOficial.Datos.PrecioCambiado)
+                                                }
+                                                else
+                                                {
+                                                    @Herramientas.Precios.Euro(minimoHistoricoOficial.Datos.Precio)
+                                                }
+                                            }
+                                            else if (prefs.Divisa == "us")
+                                            {
+                                                if (minimoHistoricoOficial.Datos.PrecioCambiado > 0)
+                                                {
+                                                    @Herramientas.Precios.Dolar(minimoHistoricoOficial.Datos.PrecioCambiado)
+                                                }
+                                                else
+                                                {
+                                                    @Herramientas.Precios.Dolar(minimoHistoricoOficial.Datos.Precio)
+                                                }
+                                            }
+                                        </div>
+
+                                        @if (cajasContador == 1)
+                                        {
+                                            <div style="font-size: 14px;">
+                                                @mensajeMinimo
+                                            </div>
+                                        }
                                     </div>
                                 }
-                            </div>
-                        }
-                    }
-                </div>
-            </div>
-        }
-
-        @if (datos?.HistoricosNoOficiales?.Count > 0)
-        {
-            <div class="pepeizq-caja-info">
-                <div style="background-color: rgba(0,0,0,.5); padding: 10px 15px; border-top-left-radius: inherit; border-top-right-radius: inherit;">
-                    @WebExtensions.I18n.GetMessage("String29")
-                </div>
-
-                <div style="padding: 10px 15px; display: flex; flex-direction: column; gap: 20px;">
-                    @if (minimoHistoricoNoOficial != null)
-                    {
-                        string mensajeMinimo = string.Empty;
-
-                        if (mejorActualNoOficial != null)
-                        {
-                            if (mejorActualNoOficial.Datos.Precio == minimoHistoricoNoOficial.Datos.Precio && mejorActualNoOficial.Datos.Tienda == minimoHistoricoNoOficial.Datos.Tienda)
-                            {
-                                mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String5"), minimoHistoricoNoOficial.Tienda);
                             }
-                        }
 
-                        if (string.IsNullOrEmpty(mensajeMinimo) == true)
-                        {
-                            mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String4"), Herramientas.Calculadora.DiferenciaHaceTiempo(minimoHistoricoNoOficial.Datos.FechaDetectado, WebExtensions.I18n), minimoHistoricoNoOficial.Tienda);
-                        }
-
-                        if (string.IsNullOrEmpty(mensajeMinimo) == false)
-                        {
-                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            @if (mejorActualOficial == null)
+                            {
                                 <div>
-                                    @WebExtensions.I18n.GetMessage("String3")
+                                    @WebExtensions.I18n.GetMessage("String2")
                                 </div>
+                            }
+                            else
+                            {
+                                bool enseñarEnlace = true;
 
-                                <div style="background: rgba(0,0,0,.7); padding: 5px 10px">
-                                    @if (prefs.Divisa == "eu")
-                                    {
-                                        if (minimoHistoricoNoOficial.Datos.PrecioCambiado > 0)
-                                        {
-                                            @Herramientas.Precios.Euro(minimoHistoricoNoOficial.Datos.PrecioCambiado)
-                                        }
-                                        else
-                                        {
-                                            @Herramientas.Precios.Euro(minimoHistoricoNoOficial.Datos.Precio)
-                                        }
-                                    }
-                                    else if (prefs.Divisa == "us")
-                                    {
-                                        if (minimoHistoricoNoOficial.Datos.PrecioCambiado > 0)
-                                        {
-                                            @Herramientas.Precios.Dolar(minimoHistoricoNoOficial.Datos.PrecioCambiado)
-                                        }
-                                        else
-                                        {
-                                            @Herramientas.Precios.Dolar(minimoHistoricoNoOficial.Datos.Precio)
-                                        }
-                                    }
-                                </div>
+                                if (idDRM == 0 && mejorActualOficial.Tienda == "steam")
+                                {
+                                    enseñarEnlace = false;
+                                }
 
-                                <div style="font-size: 14px;">
-                                    @mensajeMinimo
-                                </div>
-                            </div>
-                        }
-                    }
+                                if (idDRM == 8 && mejorActualOficial.Tienda == "gog")
+                                {
+                                    enseñarEnlace = false;
+                                }
 
-                    @if (mejorActualNoOficial == null)
-                    {
-                        <div>
-                            @WebExtensions.I18n.GetMessage("String2")
-                        </div>
-                    }
-                    else
-                    {
-                        bool enseñarEnlace = true;
+                                if (idDRM == 6 && mejorActualOficial.Tienda == "epicgamesstore")
+                                {
+                                    enseñarEnlace = false;
+                                }
 
-                        if (idDRM == 0 && mejorActualNoOficial.Tienda == "steam")
-                        {
-                            enseñarEnlace = false;
-                        }
+                                if (enseñarEnlace == true)
+                                {
+                                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                                        <div style="@(cajasContador > 1 ? "text-align: center" : "");">
+                                            @WebExtensions.I18n.GetMessage("String6")
+                                        </div>
 
-                        if (idDRM == 8 && mejorActualNoOficial.Tienda == "gog")
-                        {
-                            enseñarEnlace = false;
-                        }
+                                        <button class="pepedeals-enlace" @onclick="(e => AbrirEnlace(e, mejorActualOficial.Datos.Enlace, mejorActualOficial.Datos.CodigoTexto))">
+                                            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: @(cajasContador > 1 ? "center":"space-between");">
+                                                <div style="display: flex; align-items: center; gap: 15px; @(cajasContador > 1 ? "width: 100%; justify-content: center;" : "")">
+                                                    <img src="https://pepe.deals/@mejorActualOficial.TiendaIcono" style="max-width: 20px; max-height: 20px;" />
 
-                        if (idDRM == 6 && mejorActualNoOficial.Tienda == "epicgamesstore")
-                        {
-                            enseñarEnlace = false;
-                        }
+                                                    @if (idDRM == 0)
+                                                    {
+                                                        <div>
+                                                            @mejorActualOficial.Tienda
+                                                        </div>
+                                                    }
+                                                </div>
 
-                        if (enseñarEnlace == true)
-                        {
-                            <div style="display: flex; flex-direction: column; gap: 5px;">
-                                <div>
-                                    @WebExtensions.I18n.GetMessage("String6")
-                                </div>
-
-                                <div class="pepeizq-enlace">
-                                    <a href="@mejorActualNoOficial.Datos.Enlace" style="color: inherit;" target="_blank">
-                                        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; justify-content: space-between;">
-                                            <div style="display: flex; align-items: center; gap: 15px;">
-                                                <img src="https://pepe.deals/@mejorActualNoOficial.TiendaIcono" style="max-width: 20px; max-height: 20px;" />
-
-                                                @if (idDRM == 0)
+                                                @if (mejorActualOficial.Datos.Descuento > 0)
                                                 {
-                                                    <div>
-                                                        @mejorActualNoOficial.Tienda
+                                                    <div style="padding: 10px 15px; background-color: var(--descuento); @(cajasContador == 1 ? "margin-left: auto" : "");">
+                                                        @mejorActualOficial.Datos.Descuento%
                                                     </div>
                                                 }
-                                            </div>
 
-                                            <span style="flex: 1;"></span>
-
-                                            @if (mejorActualNoOficial.Datos.Descuento > 0)
-                                            {
-                                                <div style="padding: 10px 15px; background-color: var(--descuento);">
-                                                    @mejorActualNoOficial.Datos.Descuento%
+                                                <div style="padding: 10px 15px;">
+                                                    @if (prefs.Divisa == "eu")
+                                                    {
+                                                        if (mejorActualOficial.Datos.PrecioCambiado > 0)
+                                                        {
+                                                            @Herramientas.Precios.Euro(mejorActualOficial.Datos.PrecioCambiado)
+                                                        }
+                                                        else
+                                                        {
+                                                            @Herramientas.Precios.Euro(mejorActualOficial.Datos.Precio)
+                                                        }
+                                                    }
+                                                    else if (prefs.Divisa == "us")
+                                                    {
+                                                        if (mejorActualOficial.Datos.PrecioCambiado > 0)
+                                                        {
+                                                            @Herramientas.Precios.Dolar(mejorActualOficial.Datos.PrecioCambiado)
+                                                        }
+                                                        else
+                                                        {
+                                                            @Herramientas.Precios.Dolar(mejorActualOficial.Datos.Precio)
+                                                        }
+                                                    }
                                                 </div>
-                                            }
-
-                                            <div>
-                                                @if (prefs.Divisa == "eu")
-                                                {
-                                                    if (mejorActualNoOficial.Datos.PrecioCambiado > 0)
-                                                    {
-                                                        @Herramientas.Precios.Euro(mejorActualNoOficial.Datos.PrecioCambiado)
-                                                    }
-                                                    else
-                                                    {
-                                                        @Herramientas.Precios.Euro(mejorActualNoOficial.Datos.Precio)
-                                                    }
-                                                }
-                                                else if (prefs.Divisa == "us")
-                                                {
-                                                    if (mejorActualNoOficial.Datos.PrecioCambiado > 0)
-                                                    {
-                                                        @Herramientas.Precios.Dolar(mejorActualNoOficial.Datos.PrecioCambiado)
-                                                    }
-                                                    else
-                                                    {
-                                                        @Herramientas.Precios.Dolar(mejorActualNoOficial.Datos.Precio)
-                                                    }
-                                                }
                                             </div>
-                                        </div>
-                                    </a>
-                                </div>
-
-                                @if (string.IsNullOrEmpty(mejorActualNoOficial.Datos.CodigoTexto) == false)
-                                {
-                                    <div style="text-align: right; margin-right: 10px; font-size: 14px;">
-                                        @string.Format(WebExtensions.I18n.GetMessage("String7"), mejorActualNoOficial.Datos.CodigoTexto)
+                                        </button>
                                     </div>
                                 }
-                            </div>
-                        }
-                    }
-                </div>
-            </div>
-        }
-
-        @if (datos?.HistoricosMarketplaces?.Count > 0)
-        {
-            <div class="pepeizq-caja-info">
-                <div style="background-color: rgba(0,0,0,.5); padding: 10px 15px; border-top-left-radius: inherit; border-top-right-radius: inherit;">
-                    @WebExtensions.I18n.GetMessage("String30")
-                </div>
-
-                <div style="padding: 10px 15px; display: flex; flex-direction: column; gap: 20px;">
-                    @if (minimoHistoricoMarketplace != null)
-                    {
-                        string mensajeMinimo = string.Empty;
-
-                        if (mejorActualMarketplace != null)
-                        {
-                            if (mejorActualMarketplace.Datos.Precio == minimoHistoricoMarketplace.Datos.Precio && mejorActualMarketplace.Datos.Tienda == minimoHistoricoMarketplace.Datos.Tienda)
-                            {
-                                mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String5"), minimoHistoricoMarketplace.Tienda);
                             }
-                        }
-
-                        if (string.IsNullOrEmpty(mensajeMinimo) == true)
-                        {
-                            mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String4"), Herramientas.Calculadora.DiferenciaHaceTiempo(minimoHistoricoMarketplace.Datos.FechaDetectado, WebExtensions.I18n), minimoHistoricoMarketplace.Tienda);
-                        }
-
-                        if (string.IsNullOrEmpty(mensajeMinimo) == false)
-                        {
-                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                                <div>
-                                    @WebExtensions.I18n.GetMessage("String3")
-                                </div>
-
-                                <div style="background: rgba(0,0,0,.7); padding: 5px 10px">
-                                    @if (prefs.Divisa == "eu")
-                                    {
-                                        if (minimoHistoricoMarketplace.Datos.PrecioCambiado > 0)
-                                        {
-                                            @Herramientas.Precios.Euro(minimoHistoricoMarketplace.Datos.PrecioCambiado)
-                                        }
-                                        else
-                                        {
-                                            @Herramientas.Precios.Euro(minimoHistoricoMarketplace.Datos.Precio)
-                                        }
-                                    }
-                                    else if (prefs.Divisa == "us")
-                                    {
-                                        if (minimoHistoricoMarketplace.Datos.PrecioCambiado > 0)
-                                        {
-                                            @Herramientas.Precios.Dolar(minimoHistoricoMarketplace.Datos.PrecioCambiado)
-                                        }
-                                        else
-                                        {
-                                            @Herramientas.Precios.Dolar(minimoHistoricoMarketplace.Datos.Precio)
-                                        }
-                                    }
-                                </div>
-
-                                <div style="font-size: 14px;">
-                                    @mensajeMinimo
-                                </div>
-                            </div>
-                        }
-                    }
-
-                    @if (mejorActualMarketplace == null)
-                    {
-                        <div>
-                            @WebExtensions.I18n.GetMessage("String2")
                         </div>
-                    }
-                    else
-                    {
-                        bool enseñarEnlace = true;
+                    </div>
+                }
 
-                        if (idDRM == 0 && mejorActualMarketplace.Tienda == "steam")
-                        {
-                            enseñarEnlace = false;
-                        }
+                @if (datos?.HistoricosNoOficiales?.Count > 0)
+                {
+                    <div class="pepeizq-caja-info">
+                        <div style="background-color: rgba(0,0,0,.5); padding: 10px 15px; border-top-left-radius: inherit; border-top-right-radius: inherit; @(cajasContador > 1 ? "text-align: center" : "");">
+                            @WebExtensions.I18n.GetMessage("String29")
+                        </div>
 
-                        if (idDRM == 8 && mejorActualMarketplace.Tienda == "gog")
-                        {
-                            enseñarEnlace = false;
-                        }
+                        <div style="padding: 10px 15px; display: flex; flex-direction: column; gap: 20px;">
+                            @if (minimoHistoricoNoOficial != null)
+                            {
+                                string mensajeMinimo = string.Empty;
 
-                        if (idDRM == 6 && mejorActualMarketplace.Tienda == "epicgamesstore")
-                        {
-                            enseñarEnlace = false;
-                        }
+                                if (mejorActualNoOficial != null)
+                                {
+                                    if (mejorActualNoOficial.Datos.Precio == minimoHistoricoNoOficial.Datos.Precio && mejorActualNoOficial.Datos.Tienda == minimoHistoricoNoOficial.Datos.Tienda)
+                                    {
+                                        mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String5"), minimoHistoricoNoOficial.Tienda);
+                                    }
+                                }
 
-                        if (enseñarEnlace == true)
-                        {
-                            <div style="display: flex; flex-direction: column; gap: 5px;">
-                                <div>
-                                    @WebExtensions.I18n.GetMessage("String6")
-                                </div>
+                                if (string.IsNullOrEmpty(mensajeMinimo) == true)
+                                {
+                                    mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String4"), Herramientas.Calculadora.DiferenciaHaceTiempo(minimoHistoricoNoOficial.Datos.FechaDetectado, WebExtensions.I18n), minimoHistoricoNoOficial.Tienda);
+                                }
 
-                                <div class="pepeizq-enlace">
-                                    <a href="@mejorActualMarketplace.Datos.Enlace" style="color: inherit;" target="_blank">
-                                        <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; justify-content: space-between;">
-                                            <div style="display: flex; align-items: center; gap: 15px;">
-                                                <img src="https://pepe.deals/@mejorActualMarketplace.TiendaIcono" style="max-width: 20px; max-height: 20px;" />
+                                if (string.IsNullOrEmpty(mensajeMinimo) == false)
+                                {
+                                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; @(cajasContador > 1 ? "justify-content: center;" : "")">
+                                        <div>
+                                            @WebExtensions.I18n.GetMessage("String3")
+                                        </div>
 
-                                                @if (idDRM == 0)
+                                        <div style="background: rgba(0,0,0,.7); padding: 5px 10px">
+                                            @if (prefs.Divisa == "eu")
+                                            {
+                                                if (minimoHistoricoNoOficial.Datos.PrecioCambiado > 0)
                                                 {
-                                                    <div>
-                                                        @mejorActualMarketplace.Tienda
+                                                    @Herramientas.Precios.Euro(minimoHistoricoNoOficial.Datos.PrecioCambiado)
+                                                }
+                                                else
+                                                {
+                                                    @Herramientas.Precios.Euro(minimoHistoricoNoOficial.Datos.Precio)
+                                                }
+                                            }
+                                            else if (prefs.Divisa == "us")
+                                            {
+                                                if (minimoHistoricoNoOficial.Datos.PrecioCambiado > 0)
+                                                {
+                                                    @Herramientas.Precios.Dolar(minimoHistoricoNoOficial.Datos.PrecioCambiado)
+                                                }
+                                                else
+                                                {
+                                                    @Herramientas.Precios.Dolar(minimoHistoricoNoOficial.Datos.Precio)
+                                                }
+                                            }
+                                        </div>
+
+                                        @if (cajasContador == 1)
+                                        {
+                                            <div style="font-size: 14px;">
+                                                @mensajeMinimo
+                                            </div>
+                                        }   
+                                    </div>
+                                }
+                            }
+
+                            @if (mejorActualNoOficial == null)
+                            {
+                                <div>
+                                    @WebExtensions.I18n.GetMessage("String2")
+                                </div>
+                            }
+                            else
+                            {
+                                bool enseñarEnlace = true;
+
+                                if (idDRM == 0 && mejorActualNoOficial.Tienda == "steam")
+                                {
+                                    enseñarEnlace = false;
+                                }
+
+                                if (idDRM == 8 && mejorActualNoOficial.Tienda == "gog")
+                                {
+                                    enseñarEnlace = false;
+                                }
+
+                                if (idDRM == 6 && mejorActualNoOficial.Tienda == "epicgamesstore")
+                                {
+                                    enseñarEnlace = false;
+                                }
+
+                                if (enseñarEnlace == true)
+                                {
+                                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                                        <div style="@(cajasContador > 1 ? "text-align: center" : "");">
+                                            @WebExtensions.I18n.GetMessage("String6")
+                                        </div>
+
+                                        <button class="pepedeals-enlace" @onclick="(e => AbrirEnlace(e, mejorActualNoOficial.Datos.Enlace, mejorActualNoOficial.Datos.CodigoTexto))">
+                                            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: @(cajasContador > 1 ? "center" : "space-between");">
+                                                <div style="display: flex; align-items: center; gap: 15px; @(cajasContador > 1 ? "width: 100%; justify-content: center;" : "")">
+                                                    <img src="https://pepe.deals/@mejorActualNoOficial.TiendaIcono" style="max-width: 20px; max-height: 20px;" />
+
+                                                    @if (idDRM == 0)
+                                                    {
+                                                        <div>
+                                                            @mejorActualNoOficial.Tienda
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                @if (mejorActualNoOficial.Datos.Descuento > 0)
+                                                {
+                                                    <div style="padding: 10px 15px; background-color: var(--descuento); @(cajasContador == 1 ? "margin-left: auto" : "");">
+                                                        @mejorActualNoOficial.Datos.Descuento%
                                                     </div>
                                                 }
-                                            </div>
 
-                                            <span style="flex: 1;"></span>
-
-                                            @if (mejorActualMarketplace.Datos.Descuento > 0)
-                                            {
-                                                <div style="padding: 10px 15px; background-color: var(--descuento);">
-                                                    @mejorActualMarketplace.Datos.Descuento%
+                                                <div style="padding: 10px 15px;">
+                                                    @if (prefs.Divisa == "eu")
+                                                    {
+                                                        if (mejorActualNoOficial.Datos.PrecioCambiado > 0)
+                                                        {
+                                                            @Herramientas.Precios.Euro(mejorActualNoOficial.Datos.PrecioCambiado)
+                                                        }
+                                                        else
+                                                        {
+                                                            @Herramientas.Precios.Euro(mejorActualNoOficial.Datos.Precio)
+                                                        }
+                                                    }
+                                                    else if (prefs.Divisa == "us")
+                                                    {
+                                                        if (mejorActualNoOficial.Datos.PrecioCambiado > 0)
+                                                        {
+                                                            @Herramientas.Precios.Dolar(mejorActualNoOficial.Datos.PrecioCambiado)
+                                                        }
+                                                        else
+                                                        {
+                                                            @Herramientas.Precios.Dolar(mejorActualNoOficial.Datos.Precio)
+                                                        }
+                                                    }
                                                 </div>
-                                            }
-
-                                            <div>
-                                                @if (prefs.Divisa == "eu")
-                                                {
-                                                    if (mejorActualMarketplace.Datos.PrecioCambiado > 0)
-                                                    {
-                                                        @Herramientas.Precios.Euro(mejorActualMarketplace.Datos.PrecioCambiado)
-                                                    }
-                                                    else
-                                                    {
-                                                        @Herramientas.Precios.Euro(mejorActualMarketplace.Datos.Precio)
-                                                    }
-                                                }
-                                                else if (prefs.Divisa == "us")
-                                                {
-                                                    if (mejorActualMarketplace.Datos.PrecioCambiado > 0)
-                                                    {
-                                                        @Herramientas.Precios.Dolar(mejorActualMarketplace.Datos.PrecioCambiado)
-                                                    }
-                                                    else
-                                                    {
-                                                        @Herramientas.Precios.Dolar(mejorActualMarketplace.Datos.Precio)
-                                                    }
-                                                }
                                             </div>
-                                        </div>
-                                    </a>
-                                </div>
-
-                                @if (string.IsNullOrEmpty(mejorActualMarketplace.Datos.CodigoTexto) == false)
-                                {
-                                    <div style="text-align: right; margin-right: 10px; font-size: 14px;">
-                                        @string.Format(WebExtensions.I18n.GetMessage("String7"), mejorActualMarketplace.Datos.CodigoTexto)
+                                        </button>
                                     </div>
                                 }
-                            </div>
-                        }
-                    }
-                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                @if (datos?.HistoricosMarketplaces?.Count > 0)
+                {
+                    <div class="pepeizq-caja-info">
+                        <div style="background-color: rgba(0,0,0,.5); padding: 10px 15px; border-top-left-radius: inherit; border-top-right-radius: inherit; @(cajasContador > 1 ? "text-align: center" : "");">
+                            @WebExtensions.I18n.GetMessage("String30")
+                        </div>
+
+                        <div style="padding: 10px 15px; display: flex; flex-direction: column; gap: 20px;">
+                            @if (minimoHistoricoMarketplace != null)
+                            {
+                                string mensajeMinimo = string.Empty;
+
+                                if (mejorActualMarketplace != null)
+                                {
+                                    if (mejorActualMarketplace.Datos.Precio == minimoHistoricoMarketplace.Datos.Precio && mejorActualMarketplace.Datos.Tienda == minimoHistoricoMarketplace.Datos.Tienda)
+                                    {
+                                        mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String5"), minimoHistoricoMarketplace.Tienda);
+                                    }
+                                }
+
+                                if (string.IsNullOrEmpty(mensajeMinimo) == true)
+                                {
+                                    mensajeMinimo = string.Format(WebExtensions.I18n.GetMessage("String4"), Herramientas.Calculadora.DiferenciaHaceTiempo(minimoHistoricoMarketplace.Datos.FechaDetectado, WebExtensions.I18n), minimoHistoricoMarketplace.Tienda);
+                                }
+
+                                if (string.IsNullOrEmpty(mensajeMinimo) == false)
+                                {
+                                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; @(cajasContador > 1 ? "justify-content: center;" : "")">
+                                        <div>
+                                            @WebExtensions.I18n.GetMessage("String3")
+                                        </div>
+
+                                        <div style="background: rgba(0,0,0,.7); padding: 5px 10px">
+                                            @if (prefs.Divisa == "eu")
+                                            {
+                                                if (minimoHistoricoMarketplace.Datos.PrecioCambiado > 0)
+                                                {
+                                                    @Herramientas.Precios.Euro(minimoHistoricoMarketplace.Datos.PrecioCambiado)
+                                                }
+                                                else
+                                                {
+                                                    @Herramientas.Precios.Euro(minimoHistoricoMarketplace.Datos.Precio)
+                                                }
+                                            }
+                                            else if (prefs.Divisa == "us")
+                                            {
+                                                if (minimoHistoricoMarketplace.Datos.PrecioCambiado > 0)
+                                                {
+                                                    @Herramientas.Precios.Dolar(minimoHistoricoMarketplace.Datos.PrecioCambiado)
+                                                }
+                                                else
+                                                {
+                                                    @Herramientas.Precios.Dolar(minimoHistoricoMarketplace.Datos.Precio)
+                                                }
+                                            }
+                                        </div>
+
+                                        @if (cajasContador == 1)
+                                        {
+                                            <div style="font-size: 14px;">
+                                                @mensajeMinimo
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+
+                            @if (mejorActualMarketplace == null)
+                            {
+                                <div>
+                                    @WebExtensions.I18n.GetMessage("String2")
+                                </div>
+                            }
+                            else
+                            {
+                                bool enseñarEnlace = true;
+
+                                if (idDRM == 0 && mejorActualMarketplace.Tienda == "steam")
+                                {
+                                    enseñarEnlace = false;
+                                }
+
+                                if (idDRM == 8 && mejorActualMarketplace.Tienda == "gog")
+                                {
+                                    enseñarEnlace = false;
+                                }
+
+                                if (idDRM == 6 && mejorActualMarketplace.Tienda == "epicgamesstore")
+                                {
+                                    enseñarEnlace = false;
+                                }
+
+                                if (enseñarEnlace == true)
+                                {
+                                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                                        <div style="@(cajasContador > 1 ? "text-align: center" : "");">
+                                            @WebExtensions.I18n.GetMessage("String6")
+                                        </div>
+
+                                        <button class="pepedeals-enlace" @onclick="(e => AbrirEnlace(e, mejorActualMarketplace.Datos.Enlace, mejorActualMarketplace.Datos.CodigoTexto))">
+                                            <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap; justify-content: @(cajasContador > 1 ? "center" : "space-between");">
+                                                <div style="display: flex; align-items: center; gap: 15px; @(cajasContador > 1 ? "width: 100%; justify-content: center;" : "")">
+                                                    <img src="https://pepe.deals/@mejorActualMarketplace.TiendaIcono" style="max-width: 20px; max-height: 20px;" />
+
+                                                    @if (idDRM == 0)
+                                                    {
+                                                        <div>
+                                                            @mejorActualMarketplace.Tienda
+                                                        </div>
+                                                    }
+                                                </div>
+
+                                                @if (mejorActualMarketplace.Datos.Descuento > 0)
+                                                {
+                                                    <div style="padding: 10px 15px; background-color: var(--descuento); @(cajasContador == 1 ? "margin-left: auto" : "");">
+                                                        @mejorActualMarketplace.Datos.Descuento%
+                                                    </div>
+                                                }
+
+                                                <div style="padding: 10px 15px;">
+                                                    @if (prefs.Divisa == "eu")
+                                                    {
+                                                        if (mejorActualMarketplace.Datos.PrecioCambiado > 0)
+                                                        {
+                                                            @Herramientas.Precios.Euro(mejorActualMarketplace.Datos.PrecioCambiado)
+                                                        }
+                                                        else
+                                                        {
+                                                            @Herramientas.Precios.Euro(mejorActualMarketplace.Datos.Precio)
+                                                        }
+                                                    }
+                                                    else if (prefs.Divisa == "us")
+                                                    {
+                                                        if (mejorActualMarketplace.Datos.PrecioCambiado > 0)
+                                                        {
+                                                            @Herramientas.Precios.Dolar(mejorActualMarketplace.Datos.PrecioCambiado)
+                                                        }
+                                                        else
+                                                        {
+                                                            @Herramientas.Precios.Dolar(mejorActualMarketplace.Datos.Precio)
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         }
+    </div>
+}
+
+@if (mostrarAviso == true)
+{
+    <div class="pepedeals-aviso-panel">
+        <div style="max-width: 600px; width: 100%; background-color: var(--fondoSubcabecera); border: 1px solid var(--fondoBotonPequeño); margin: 20px auto; overflow-y: scroll; border-radius: 20px; box-shadow: 0px 4px 8px 0px rgba(0, 0, 0, 0.28),0px 0px 2px 0px rgba(0, 0, 0, 0.24);
+                    padding: 30px; display: flex; justify-content: center; flex-direction: column; gap: 20px;">
+            <div style="color: var(--colorTexto); font-size: 16px;">
+                @string.Format(WebExtensions.I18n.GetMessage("String7"), avisoCodigo)
+            </div>
+
+            <button class="pepedeals-enlace" @onclick="(e => AbrirEnlace(e, avisoEnlace))" style="width: fit-content;">
+                @WebExtensions.I18n.GetMessage("String36")
+            </button>
+        </div>            
     </div>
 }
 
@@ -714,6 +770,10 @@
     private string enlaceGratis = null;
     private string mensajeSuscripciones = null;
     private string enlaceSuscripciones = null;
+
+    private bool mostrarAviso = false;
+    private string avisoCodigo = string.Empty;
+    private string avisoEnlace = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -1018,14 +1078,10 @@
                             }
                             else
                             {
-                                if (gratisDisponibles == 1)
+                                if (gratisDisponibles >= 1)
                                 {
                                     enlaceGratis = enlaceGratis2;
                                     mensajeGratis = string.Format(WebExtensions.I18n.GetMessage("String14"), nombreGratis2);
-                                }
-                                else if (gratisDisponibles > 1)
-                                {
-                                    mensajeGratis = string.Format(WebExtensions.I18n.GetMessage("String15"), gratisDisponibles);
                                 }
                             }
                         }
@@ -1084,6 +1140,27 @@
                 }
             }
         }
+    }
+
+    private async void AbrirEnlace(MouseEventArgs e, string enlace, string codigo = null)
+    {
+        if (string.IsNullOrEmpty(codigo) == false)
+        {
+            mostrarAviso = true;
+
+            avisoEnlace = enlace;
+            avisoCodigo = codigo;
+        }
+        else
+        {
+            mostrarAviso = false;
+
+            try
+            {
+                await JavaScript.InvokeVoidAsync("open", enlace, "_blank");
+            }
+            catch { }
+        }        
     }
 
     public class OyenteMensaje

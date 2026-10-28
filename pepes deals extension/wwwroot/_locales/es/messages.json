@@ -36,6 +36,7 @@
   "String33": { "message": "Abrir pepe.deals" },
   "String34": { "message": "Código Fuente" },
   "String35": { "message": "Aquí te dejo de ejemplo el juego Moonlighter en varias plataformas para que puedas comprobar la información que añade la extensión:" },
+  "String36": { "message": "Abrir Enlace" },
   "Calculator0": { "message": "hace 1 segundo" },
   "Calculator1": { "message": "hace {0} segundos" },
   "Calculator2": { "message": "hace {0} minutos" },
